@@ -143,25 +143,23 @@ public class LogistiqueLMIATests {
     @Order(7)
     @DisplayName("Prédiction sur un nouvel échantillon")
     void predictor() throws Exception {
-        File modelFile = MODEL_PATH.toFile();
-        Model<Label> loadedModel = null;
-        ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(modelFile));
-        loadedModel = (Model<Label>) objectInputStream.readObject();
-        objectInputStream.close();
+        try (ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(MODEL_PATH.toFile()))) {
+            Model<Label> loadedModel = (Model<Label>) objectInputStream.readObject();
 
-        // logger.info("Features attendues par le modèle :");
-        // loadedModel.getFeatureIDMap().forEach(name -> logger.info(" - " + name));
+            // logger.info("Features attendues par le modèle :");
+            // loadedModel.getFeatureIDMap().forEach(name -> logger.info(" - " + name));
 
-        Example<Label> example = new ArrayExample<>(new Label("non"));
-        // l'exemple doit avoir les mêmes nom de features que ceux générés par le modèle (FieldProcessor)
-        example.add(new Feature("distance_km@value", 120.0));
-        example.add(new Feature("heure_decimal@value", 8.0));
-        example.add(new Feature("pluie@non", 0.0));
-        example.add(new Feature("jour_semaine@mercredi", 2.0));
-        example.add(new Feature("vehicule_type@camionnette", 1.0));
+            Example<Label> example = new ArrayExample<>(new Label("non"));
+            // l'exemple doit avoir les mêmes nom de features que ceux générés par le modèle (FieldProcessor)
+            example.add(new Feature("distance_km@value", 120.0));
+            example.add(new Feature("heure_decimal@value", 8.0));
+            example.add(new Feature("pluie@non", 0.0));
+            example.add(new Feature("jour_semaine@mercredi", 2.0));
+            example.add(new Feature("vehicule_type@camionnette", 1.0));
 
-        // === Prédiction sur l'exemple ===
-        var prediction = loadedModel.predict(example);
-        logger.info("Prédiction : " + prediction.getOutput());
+            // === Prédiction sur l'exemple ===
+            var prediction = loadedModel.predict(example);
+            logger.info("Prédiction : " + prediction.getOutput());
+        }
     }
 }
