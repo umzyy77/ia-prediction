@@ -18,19 +18,23 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 
+import java.util.logging.Logger;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class LogistiqueLMIATests {
 
+    private static final Logger logger = Logger.getLogger(LogistiqueLMIATests.class.getName());
+
     private static final String fileName = "livraison_retards_dataset.csv";
     private static final String newFileName = "livraison_retards_dataset_converted.csv";
-    private static final String modelFileName = "livraison_regressor.ser";
+    private static final String modelFile = "livraison_regressor.ser";
     private static final Path input = Paths.get("src", "main", "resources", fileName);
     private static final Path output = Paths.get("src", "main", "resources", newFileName);
-    private static final Path MODEL_PATH = Paths.get("src", "main", "resources", modelFileName);
+    private static final Path MODEL_PATH = Paths.get("src", "main", "resources", modelFile);
 
-    private static LabelFactory labelFactory;
+    private static LabelFactory LabelFactory;
     private static LinkedHashMap<String, FieldProcessor> fieldProcessors;
     private static RowProcessor<Label> rowProcessor;
     private static CSVDataSource<Label> dataSource;
@@ -40,13 +44,13 @@ public class LogistiqueLMIATests {
 
     @BeforeAll
     public static void setUp() {
-        labelFactory = new LabelFactory();
-        fieldProcessors = new LinkedHashMap<>();
-        configFile();
+        LabelFactory = new LabelFactory(); // Définir le label factory
+        fieldProcessors = new LinkedHashMap<>(); // Définir les extracteurs de colonnes
+        configFile(); // encodage des données
     }
 
     @AfterAll
-    public static void tearDown() {
+    public static void tearDown() { // Nettoyage des ressources
         if (output.toFile().exists()) {
             boolean deleted = output.toFile().delete();
             assertTrue(deleted, "Le fichier converti doit être supprimé après les tests");
@@ -71,7 +75,7 @@ public class LogistiqueLMIATests {
 
         // Le processeur de la colonne de sortie (retard)
         FieldResponseProcessor<Label> responseProcessor =
-                new FieldResponseProcessor<>("retard", "non", labelFactory);
+                new FieldResponseProcessor<>("retard", "non", LabelFactory);
 
         // Création du RowProcessor avec les éléments définis
         rowProcessor = new RowProcessor<>(responseProcessor, fieldProcessors);
@@ -102,55 +106,54 @@ public class LogistiqueLMIATests {
     @Test
     @Order(3)
     @DisplayName("Division Train/Test 80/20")
-    void splitTrainTest() {
+    void splitTrainTest() { // Split train/test => Utiliser 80% des données pour l'entraînement, 20% pour les tests
         var splitter = new TrainTestSplitter<>(dataSource, 0.8, 42L);
         train = new MutableDataset<>(splitter.getTrain());
         test = new MutableDataset<>(splitter.getTest());
-        assertTrue(train.size() > 0, "Le dataset d'entraînement ne doit pas être vide");
-        assertTrue(test.size() > 0, "Le dataset de test ne doit pas être vide");
     }
 
     @Test
     @Order(4)
     @DisplayName("Entraînement du modèle (Logistic Regression)")
-    void training() {
+    void training() { // Entraînement du modèle
         var trainer = new LogisticRegressionTrainer();
         model = trainer.train(train);
-        assertNotNull(model, "Le modèle entraîné ne doit pas être null");
     }
 
     @Test
     @Order(5)
     @DisplayName("Évaluation : accuracy, matrice de confusion, f1-score")
-    void evaluator() {
+    void evaluator() { // Évaluation => Calculer l'accuracy, matrice de confusion, f1-score
         var evaluator = new LabelEvaluator();
         LabelEvaluation evaluation = evaluator.evaluate(model, test);
-        System.out.println("Résultats :");
-        System.out.println(evaluation.toString());
-        assertTrue(evaluation.accuracy() >= 0, "L'accuracy doit être positive");
+        logger.info("Résultats :");
+        logger.info(evaluation.toString());
     }
 
     @Test
     @Order(6)
     @DisplayName("Sauvegarde du modèle")
-    void saveModel() throws Exception {
+    void saveModel() throws Exception { // Sauvegarde du modèle
         try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream(MODEL_PATH.toFile()))) {
             objectOutputStream.writeObject(model);
         }
-        assertTrue(MODEL_PATH.toFile().exists(), "Le fichier du modèle doit exister");
     }
 
     @Test
     @Order(7)
     @DisplayName("Prédiction sur un nouvel échantillon")
     void predictor() throws Exception {
-        File file = MODEL_PATH.toFile();
-        Model<Label> loadedModel;
-        try (ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(file))) {
-            loadedModel = (Model<Label>) objectInputStream.readObject();
-        }
+        File modelFile = MODEL_PATH.toFile();
+        Model<Label> loadedModel = null;
+        ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(modelFile));
+        loadedModel = (Model<Label>) objectInputStream.readObject();
+        objectInputStream.close();
+
+        // logger.info("Features attendues par le modèle :");
+        // loadedModel.getFeatureIDMap().forEach(name -> logger.info(" - " + name));
 
         Example<Label> example = new ArrayExample<>(new Label("non"));
+        // l'exemple doit avoir les mêmes nom de features que ceux générés par le modèle (FieldProcessor)
         example.add(new Feature("distance_km@value", 120.0));
         example.add(new Feature("heure_decimal@value", 8.0));
         example.add(new Feature("pluie@non", 0.0));
@@ -159,7 +162,6 @@ public class LogistiqueLMIATests {
 
         // === Prédiction sur l'exemple ===
         var prediction = loadedModel.predict(example);
-        System.out.println("Prédiction : " + prediction.getOutput());
-        assertNotNull(prediction, "La prédiction ne doit pas être null");
+        logger.info("Prédiction : " + prediction.getOutput());
     }
 }

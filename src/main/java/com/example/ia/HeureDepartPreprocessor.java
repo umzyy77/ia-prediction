@@ -8,6 +8,8 @@ import java.util.List;
 
 public class HeureDepartPreprocessor {
 
+    private HeureDepartPreprocessor() {}
+
     public static void convertPreprocessor(Path input, Path output) {
         try {
             List<String> lines = Files.readAllLines(input);

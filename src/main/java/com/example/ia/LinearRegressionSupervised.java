@@ -1,7 +1,13 @@
 package com.example.ia;
 
+import java.util.logging.Logger;
+
 // Objectif pédagogique => Implémenter une régression linéaire supervisée
 public class LinearRegressionSupervised {
+    private static final Logger logger = Logger.getLogger(LinearRegressionSupervised.class.getName());
+
+    private LinearRegressionSupervised() {}
+
     public static void main(String[] args) {
         // On apprend à prédire une sortie Y à partir d'une entrée X avec une fct du type Y = a * X + b.
         double[] xData = {6, 8, 10, 12}; // Données d'entraînement => X: heure
@@ -26,9 +32,9 @@ public class LinearRegressionSupervised {
             a -= learningRate * totalErrorA / xData.length; // Mise à jour de la pente
             b -= learningRate * totalErrorB / xData.length; // Mise à jour de la constante intercept
         }
-        System.out.printf("Modèle entraîné : y = %.3f * x + %.3f%n", a, b); // Affichage du modèle appris
+        logger.info(String.format("Modèle entraîné : y = %.3f * x + %.3f", a, b)); // Affichage du modèle appris
 
         double testHour = 11; // Test : prédire le retard pour 11h
-        System.out.printf("Probabilité de retard à %.0fh : %.2f%n", testHour, a * testHour + b);
+        logger.info(String.format("Probabilité de retard à %.0fh : %.2f", testHour, a * testHour + b));
     }
 }
