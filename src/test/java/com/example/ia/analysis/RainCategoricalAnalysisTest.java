@@ -6,8 +6,9 @@ import com.example.ia.service.RainPredictionService;
 import org.junit.jupiter.api.*;
 import org.tribuo.classification.evaluation.LabelEvaluation;
 
+import java.io.IOException;
 import java.nio.file.*;
-import java.util.List;
+import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -34,8 +35,8 @@ class RainCategoricalAnalysisTest {
     }
 
     @AfterAll
-    static void tearDown() {
-        if (convertedFile.toFile().exists()) convertedFile.toFile().delete();
+    static void tearDown() throws IOException {
+        Files.deleteIfExists(convertedFile);
     }
 
     @Test

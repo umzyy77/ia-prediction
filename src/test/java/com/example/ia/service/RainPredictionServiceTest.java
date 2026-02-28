@@ -8,6 +8,7 @@ import org.tribuo.classification.Label;
 import org.tribuo.classification.evaluation.LabelEvaluation;
 import org.tribuo.data.csv.CSVDataSource;
 
+import java.io.IOException;
 import java.nio.file.*;
 
 import java.util.logging.Logger;
@@ -36,9 +37,9 @@ class RainPredictionServiceTest {
     }
 
     @AfterAll
-    static void tearDown() {
-        if (convertedFile.toFile().exists()) convertedFile.toFile().delete();
-        if (modelPath.toFile().exists()) modelPath.toFile().delete();
+    static void tearDown() throws IOException {
+        Files.deleteIfExists(convertedFile);
+        Files.deleteIfExists(modelPath);
     }
 
     @Test

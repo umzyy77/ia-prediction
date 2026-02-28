@@ -50,15 +50,9 @@ public class LogistiqueLMIATests {
     }
 
     @AfterAll
-    public static void tearDown() { // Nettoyage des ressources
-        if (output.toFile().exists()) {
-            boolean deleted = output.toFile().delete();
-            assertTrue(deleted, "Le fichier converti doit être supprimé après les tests");
-        }
-        if (MODEL_PATH.toFile().exists()) {
-            boolean deleted = MODEL_PATH.toFile().delete();
-            assertTrue(deleted, "Le fichier du modèle doit être supprimé après les tests");
-        }
+    public static void tearDown() throws IOException { // Nettoyage des ressources
+        Files.deleteIfExists(output);
+        Files.deleteIfExists(MODEL_PATH);
     }
 
     private static void configFile() {
@@ -93,7 +87,7 @@ public class LogistiqueLMIATests {
     @Test
     @Order(2)
     @DisplayName("Chargement du dataset CSV")
-    void loadDatasets() throws IOException {
+    void loadDatasets() {
         dataSource = new CSVDataSource<>(
                 Paths.get("src", "main", "resources", newFileName),
                 rowProcessor,
@@ -142,6 +136,7 @@ public class LogistiqueLMIATests {
     @Test
     @Order(7)
     @DisplayName("Prédiction sur un nouvel échantillon")
+    @SuppressWarnings("unchecked")
     void predictor() throws Exception {
         try (ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(MODEL_PATH.toFile()))) {
             Model<Label> loadedModel = (Model<Label>) objectInputStream.readObject();

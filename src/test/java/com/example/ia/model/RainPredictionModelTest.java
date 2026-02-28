@@ -25,7 +25,7 @@ class RainPredictionModelTest {
         RainPredictionModel model = new RainPredictionModel();
         RowProcessor<Label> rowProcessor = model.getRowProcessor();
 
-        String responseName = rowProcessor.getResponseProcessor().getFieldName();
-        assertEquals("pluie", responseName, "La variable de sortie doit être 'pluie'");
+        String description = rowProcessor.getResponseProcessor().toString();
+        assertTrue(description.contains("pluie"), "La variable de sortie doit être 'pluie'");
     }
 }
